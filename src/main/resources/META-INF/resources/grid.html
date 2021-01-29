@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grid</title>
+
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly.min.css">
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly-additions.min.css">
+</head>
+<body>
+<div class="container">
+
+    <h2>Game of Life</h2>
+    <div class="row">
+    <canvas id="grid" width="660" height="440"></canvas>
+    </div>
+    <div class="row">
+    	<input type="button" id="nextStep" value="Next Generation" />
+    	<input type="button" id="reset" value="Reset" />
+    </div>
+    <div class="row" id="result"></div>
+</div>
+</body>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script>
+var gridWidth = 60;
+var gridHeight = 40;
+
+var grid = Array.from(Array(gridWidth), () => new Array(gridHeight));
+for (var i=0; i<gridWidth; i++) {
+	for (var j=0; j<gridHeight; j++) {
+		grid[i][j] = 0;
+	}
+}
+
+
+drawgrid = function() {
+	console.log("About to draw this grid:");
+	console.log(grid);
+    var ctx = document.getElementById('grid').getContext('2d');
+    for (var x = 0, i = 0; i < gridWidth; x+=11, i++) {
+        for (var y = 0, j=0; j < gridHeight; y+=11, j++) {
+            ctx.beginPath();    
+            if (grid[i][j] > 0) {
+                ctx.fillStyle = "rgb(255,255,0)";
+                console.log("Setting this one to yellow.");
+            } else {
+                ctx.fillStyle = "rgb(200,0,0)";
+            }
+            ctx.rect (x, y, 10, 10);
+            ctx.fill();
+            ctx.closePath();
+            
+        }
+    }
+
+};
+
+$(function(){
+	drawgrid();
+	$("#nextStep").click(function() {
+		console.log("Button clicked.");
+		$.get( "/step/next", function( data ) {
+			$("#result" ).html( data );
+			console.log(data);
+		});
+	});
+
+	$("#reset").click(function() {
+		console.log("Button clicked.");
+		$.get( "/step/reset", function( data ) {
+			$("#result" ).html( data );
+			console.log(data);
+		});
+	});
+});
+</script>
+<script>
+    var source = new EventSource("/grid/stream");
+    source.onmessage = function (event) {
+        grid = JSON.parse(event.data);
+        console.log("Got new grid:");
+        console.log(grid);
+        drawgrid();
+        //document.getElementById("content").innerHTML = event.data;
+    };
+</script>
+</html>
